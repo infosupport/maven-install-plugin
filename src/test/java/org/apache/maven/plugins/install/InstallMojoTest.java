@@ -269,33 +269,15 @@ public class InstallMojoTest
 
         mojo.execute();
 
-        ArtifactMetadata metadata = null;
-        for ( Object o : artifact.getMetadataList() )
-        {
-            metadata = (ArtifactMetadata) o;
-            if ( metadata.getRemoteFilename().endsWith( "pom" ) )
-            {
-                break;
-            }
-        }
-
-        RepositoryManager repoManager = (RepositoryManager) getVariableValueFromObject( mojo, "repositoryManager" );
-        
-        ProjectBuildingRequest pbr = mavenSession.getProjectBuildingRequest();
-
-        File pom = new File( repoManager.getLocalRepositoryBasedir( pbr ),
-                             repoManager.getPathForLocalMetadata( pbr, metadata ) );
-
-        assertTrue( pom.exists() );
-
         String groupId = dotToSlashReplacer( artifact.getGroupId() );
         String packaging = project.getPackaging();
         String localPath = getBasedir() + "/" + LOCAL_REPO + groupId + "/" + artifact.getArtifactId() + "/" +
                         artifact.getVersion() + "/" + artifact.getArtifactId() + "-" + artifact.getVersion();
-        
+
+        File installedPom = new File( localPath + ".pom" );
+        assertTrue( installedPom.exists() );
 
         File installedArtifact = new File( localPath + "." + packaging );
-
         assertTrue( installedArtifact.exists() );
         
         assertEquals( 5, FileUtils.getFiles( new File( LOCAL_REPO ), null, null ).size() );
