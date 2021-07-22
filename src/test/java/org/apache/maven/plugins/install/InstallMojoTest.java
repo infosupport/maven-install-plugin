@@ -27,7 +27,6 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.metadata.ArtifactMetadata;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.testing.AbstractMojoTestCase;
@@ -36,10 +35,13 @@ import org.apache.maven.plugins.install.stubs.InstallArtifactStub;
 import org.apache.maven.project.DefaultProjectBuildingRequest;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuildingRequest;
-import org.apache.maven.shared.transfer.repository.RepositoryManager;
 import org.apache.maven.shared.utils.io.FileUtils;
-import org.sonatype.aether.impl.internal.EnhancedLocalRepositoryManager;
-import org.sonatype.aether.util.DefaultRepositorySystemSession;
+import org.eclipse.aether.DefaultRepositorySystemSession;
+import org.eclipse.aether.internal.impl.DefaultTrackingFileManager;
+import org.eclipse.aether.internal.impl.EnhancedLocalRepositoryManagerFactory;
+import org.eclipse.aether.repository.LocalRepository;
+import org.eclipse.aether.repository.LocalRepositoryManager;
+import org.eclipse.aether.repository.NoLocalRepositoryManagerException;
 
 /**
  * @author <a href="mailto:aramirez@apache.org">Allan Ramirez</a>
@@ -87,7 +89,7 @@ public class InstallMojoTest
         updateMavenProject( project );
         
         setVariableValueToObject( mojo, "reactorProjects", Collections.singletonList( project ) );
-        setVariableValueToObject( mojo, "session", createMavenSession() );
+        setVariableValueToObject( mojo, "session", createMavenSession( project ) );
 
         artifact = (InstallArtifactStub) project.getArtifact();
 
@@ -119,7 +121,7 @@ public class InstallMojoTest
         updateMavenProject( project );
 
         setVariableValueToObject( mojo, "reactorProjects", Collections.singletonList( project ) );
-        setVariableValueToObject( mojo, "session", createMavenSession() );
+        setVariableValueToObject( mojo, "session", createMavenSession( project ) );
 
         List<Artifact> attachedArtifacts = project.getAttachedArtifacts();
 
@@ -161,7 +163,7 @@ public class InstallMojoTest
         updateMavenProject( project );
 
         setVariableValueToObject( mojo, "reactorProjects", Collections.singletonList( project ) );
-        setVariableValueToObject( mojo, "session", createMavenSession() );
+        setVariableValueToObject( mojo, "session", createMavenSession( project ) );
 
         artifact = (InstallArtifactStub) project.getArtifact();
 
@@ -187,7 +189,7 @@ public class InstallMojoTest
         updateMavenProject( project );
 
         setVariableValueToObject( mojo, "reactorProjects", Collections.singletonList( project ) );
-        setVariableValueToObject( mojo, "session", createMavenSession() );
+        setVariableValueToObject( mojo, "session", createMavenSession( project ) );
 
         artifact = (InstallArtifactStub) project.getArtifact();
 
@@ -223,7 +225,7 @@ public class InstallMojoTest
         updateMavenProject( project );
 
         setVariableValueToObject( mojo, "reactorProjects", Collections.singletonList( project ) );
-        setVariableValueToObject( mojo, "session", createMavenSession() );
+        setVariableValueToObject( mojo, "session", createMavenSession( project ) );
 
         String packaging = project.getPackaging();
 
@@ -255,7 +257,7 @@ public class InstallMojoTest
         File file = new File( getBasedir(), "target/test-classes/unit/basic-install-checksum/" + "maven-test-jar.jar" );
 
         MavenProject project = (MavenProject) getVariableValueFromObject( mojo, "project" );
-        MavenSession mavenSession = createMavenSession();
+        MavenSession mavenSession = createMavenSession( project );
         updateMavenProject( project );
 
         setVariableValueToObject( mojo, "reactorProjects", Collections.singletonList( project ) );
@@ -315,7 +317,7 @@ public class InstallMojoTest
         updateMavenProject( project );
 
         setVariableValueToObject( mojo, "reactorProjects", Collections.singletonList( project ) );
-        setVariableValueToObject( mojo, "session", createMavenSession() );
+        setVariableValueToObject( mojo, "session", createMavenSession( project ) );
 
         artifact = (InstallArtifactStub) project.getArtifact();
 
@@ -343,14 +345,20 @@ public class InstallMojoTest
         return parameter.replace( '.', '/' );
     }
     
-    private MavenSession createMavenSession()
+    private MavenSession createMavenSession( MavenProject project ) throws NoLocalRepositoryManagerException
     {
-        MavenSession session = mock( MavenSession.class );
+        EnhancedLocalRepositoryManagerFactory factory = new EnhancedLocalRepositoryManagerFactory( new DefaultTrackingFileManager() );
         DefaultRepositorySystemSession repositorySession  = new DefaultRepositorySystemSession();
-        repositorySession.setLocalRepositoryManager( new EnhancedLocalRepositoryManager( new File( LOCAL_REPO )     ) );
+        LocalRepository localRepository = new LocalRepository( LOCAL_REPO );
+        LocalRepositoryManager localRepositoryManager = factory.newInstance( repositorySession, localRepository );
+        repositorySession.setLocalRepositoryManager( localRepositoryManager );
         ProjectBuildingRequest buildingRequest = new DefaultProjectBuildingRequest();
+        buildingRequest.setProject( project );
         buildingRequest.setRepositorySession( repositorySession );
+
+        MavenSession session = mock( MavenSession.class );
         when( session.getProjectBuildingRequest() ).thenReturn( buildingRequest );
+        when( session.getContainer() ).thenReturn( this.getContainer() );
         return session;
     }
     
