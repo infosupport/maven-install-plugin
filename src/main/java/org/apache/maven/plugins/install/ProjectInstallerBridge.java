@@ -24,6 +24,7 @@ import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuildingRequest;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
+import org.eclipse.aether.RepositorySystem;
 
 /**
  * Decouples the Mojos in this plugin from the underlying implementation - be it provided by Maven 4 or shipped with
@@ -51,7 +52,17 @@ public interface ProjectInstallerBridge
         }
         catch ( final ComponentLookupException e )
         {
-            return new Maven3ProjectInstaller();
+            // Deliberately ignored, we fall back to plan B.
+        }
+
+        try
+        {
+            final RepositorySystem repositorySystem = container.lookup( RepositorySystem.class );
+            return new Maven3ProjectInstaller( repositorySystem );
+        }
+        catch ( final ComponentLookupException e )
+        {
+            throw new IllegalStateException( "Could not locate RepositorySystem necessary for installing artifacts" );
         }
     }
 }

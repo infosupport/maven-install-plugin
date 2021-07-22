@@ -48,7 +48,6 @@ import org.apache.maven.shared.transfer.project.install.ProjectInstallerRequest;
 public class InstallMojo
     extends AbstractInstallMojo
 {
-
     /**
      * When building with multiple threads, reaching the last project doesn't have to mean that all projects are ready
      * to be installed
@@ -91,6 +90,10 @@ public class InstallMojo
     public void execute()
         throws MojoExecutionException, MojoFailureException
     {
+        final ProjectInstallerBridge projectInstallerBridge = ProjectInstallerBridge
+                .findImplementation( session.getContainer() );
+        getLog().info( "Got implementation of SomeInterface : " + projectInstallerBridge.getClass().getName() );
+
         boolean addedInstallRequest = false;
         if ( skip )
         {
@@ -105,7 +108,7 @@ public class InstallMojo
 
             if ( !installAtEnd )
             {
-                installProject( session.getProjectBuildingRequest(), projectInstallerRequest );
+                projectInstallerBridge.install( session.getProjectBuildingRequest(), project );
             }
             else
             {

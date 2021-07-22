@@ -23,6 +23,7 @@ import org.apache.maven.plugins.install.InstallException;
 import org.apache.maven.plugins.install.ProjectInstallerBridge;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuildingRequest;
+import org.eclipse.aether.RepositorySystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,8 +34,11 @@ public class Maven3ProjectInstaller implements ProjectInstallerBridge
 {
     private static final Logger LOGGER = LoggerFactory.getLogger( Maven3ProjectInstaller.class );
 
-    public Maven3ProjectInstaller()
+    private final RepositorySystem repositorySystem;
+
+    public Maven3ProjectInstaller( final RepositorySystem repositorySystem )
     {
+        this.repositorySystem = repositorySystem;
         LOGGER.info( "Using plugin-shipped implementation for Maven 3.1+" );
     }
 
