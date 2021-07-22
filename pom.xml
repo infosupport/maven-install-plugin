@@ -38,7 +38,7 @@
   <inceptionYear>2004</inceptionYear>
 
   <prerequisites>
-    <maven>${mavenVersion}</maven>
+    <maven>3.1</maven>
   </prerequisites>
 
   <scm>
